@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+:root {
+  /* Default Retro Base */
+  --background: #EFE6D5;
+  --foreground: #3D2314;
+}
+
+@theme {
+  /* --- Retro Theme Palette --- */
+  --color-retro-cream: #EFE6D5;
+  --color-retro-parchment: #E2D2B8;
+  --color-retro-tan: #C9B390;
+  
+  --color-retro-espresso: #3D2314;
+  --color-retro-mocha: #6B4E31;
+  
+  --color-retro-rust: #D97732;
+  --color-retro-caramel: #D2691E;
+  --color-retro-chocolate: #8B4513;
+  --color-retro-butter: #FFE8D1;
+
+  /* Retro Font */
+  --font-retro: ui-serif, Georgia, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Using a darker espresso tone for dark mode backgrounds */
+    --background: #2D1B11;
+    --foreground: #EFE6D5;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-retro);
+}
