@@ -29,7 +29,7 @@ export default function Home() {
 
         {/* Action Button - Tactile / Physical Retro Style */}
         <Link 
-          href="/capture"
+          href="/choose-layout"
           className="group relative inline-flex items-center justify-center gap-3 px-8 py-5 bg-[#D97732] border-4 border-[#3D2314] text-[#FFE8D1] font-bold text-xl uppercase tracking-widest rounded-sm transition-all duration-150 shadow-[6px_6px_0px_0px_#3D2314] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_#3D2314] active:translate-x-[6px] active:translate-y-[6px] active:shadow-[0px_0px_0px_0px_#3D2314]"
         >
           <span className="relative flex items-center gap-3">
@@ -38,7 +38,7 @@ export default function Home() {
               <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
               <circle cx="12" cy="13" r="3"/>
             </svg>
-            Get Captured
+            Start Session
           </span>
         </Link>
       </div>
