@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use } from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CameraView from '@/components/CameraView';
 
@@ -10,7 +10,7 @@ const LAYOUTS = [
   { id: '4-picture', name: 'Quad', count: 4 },
 ];
 
-const CapturePage = () => {
+const CaptureContent = () => {
   const searchParams = useSearchParams();
   const layoutId = searchParams.get('layout') || 'solo';
   
@@ -44,6 +44,14 @@ const CapturePage = () => {
         <CameraView layout={selectedLayout} />
       </div>
     </div>
+  );
+};
+
+const CapturePage = () => {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#EFE6D5] flex items-center justify-center text-[#3D2314] font-bold">Loading session...</div>}>
+      <CaptureContent />
+    </Suspense>
   );
 };
 
