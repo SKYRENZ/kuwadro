@@ -1,21 +1,10 @@
-import * as poseDetection from '@tensorflow-models/pose-detection';
-import * as tf from '@tensorflow/tfjs-core';
-import '@tensorflow/tfjs-backend-webgl'; // Register WebGL backend
+/**
+ * Pose detection utilities.
+ * Placeholder — ML integration will be layered in later
+ * once the basic capture flow is confirmed working.
+ */
 
-export const createDetector = async () => {
-  // Ensure the WebGL backend is ready
-  await tf.setBackend('webgl');
-  await tf.ready();
-
-  const detectorConfig = {
-    modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
-    enableSmoothing: true,
-  };
-  
-  const detector = await poseDetection.createDetector(
-    poseDetection.SupportedModels.MoveNet,
-    detectorConfig
-  );
-  
-  return detector;
-};
+// Will be implemented after capture works:
+// - MoveNet body pose detection (raised arm trigger)
+// - Hand pose detection (peace sign trigger)
+export {};
