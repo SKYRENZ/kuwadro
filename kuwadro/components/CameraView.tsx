@@ -139,14 +139,14 @@ const CameraView = ({ layout }: CameraViewProps) => {
   };
 
   return (
-    <div className="z-10 w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 items-center lg:items-start justify-center">
+    <div className="z-10 w-full max-w-6xl mx-auto flex flex-col items-center justify-center relative min-h-[500px]">
 
       {/* ───── SIDE PREVIEW FRAME (Elegant Sidebar) ───── */}
       {!isComplete && (
-        <div className="w-40 xl:w-48 shrink-0 animate-in slide-in-from-left duration-700 lg:mt-4">
+        <div className="w-40 xl:w-48 shrink-0 lg:absolute lg:left-0 lg:top-4 animate-in slide-in-from-left duration-700 mb-8 lg:mb-0 z-20">
           <div className="bg-[#E2D2B8] p-2 border-2 border-[#3D2314] shadow-[4px_4px_0px_0px_#3D2314] rounded-sm transform lg:-rotate-1">
-            <div className="text-[9px] font-black text-[#3D2314] uppercase tracking-[0.2em] mb-1.5 opacity-60 text-center">Your Frame</div>
-            <div className="scale-95 origin-top">
+            <div className="text-[10px] font-black text-[#3D2314] uppercase tracking-[0.2em] mb-2 opacity-80 text-center">Your Frame</div>
+            <div className="scale-100 origin-top">
               {renderLayoutOverlay(capturedImages, true)}
             </div>
           </div>
@@ -206,11 +206,11 @@ const CameraView = ({ layout }: CameraViewProps) => {
             <button
               onClick={handleCapture}
               disabled={countdown !== null || hasPermission === false}
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 group disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 group disabled:opacity-50 disabled:cursor-not-allowed"
               title="Take Photo"
             >
-              <div className="w-[64px] h-[64px] rounded-full bg-[#3D2314] border-4 border-[#FFE8D1] shadow-[3px_3px_0px_0px_#D97732] flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95">
-                <div className="w-[24px] h-[24px] bg-[#D97732] rounded-full border-2 border-[#FFE8D1]" />
+              <div className="w-[88px] h-[88px] rounded-full bg-[#3D2314] border-[6px] border-[#FFE8D1] shadow-[4px_4px_0px_0px_#D97732] flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95">
+                <div className="w-[36px] h-[36px] bg-[#D97732] rounded-full border-2 border-[#FFE8D1]" />
               </div>
             </button>
           </div>
@@ -232,17 +232,17 @@ const CameraView = ({ layout }: CameraViewProps) => {
             </div>
 
             {/* Action buttons */}
-            <div className="w-full p-6 bg-[#3D2314] flex justify-center gap-4 z-20 mt-2">
+            <div className="w-full p-8 bg-[#3D2314] flex justify-center gap-6 z-20 mt-4">
               <button
                 onClick={handleRetake}
-                className="bg-[#D97732] hover:bg-[#c96622] text-[#FFE8D1] border-2 border-[#FFE8D1] px-6 py-2.5 font-bold uppercase tracking-wider shadow-[4px_4px_0_0_#FFE8D1] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#FFE8D1] text-sm"
+                className="bg-[#D97732] hover:bg-[#c96622] text-[#FFE8D1] border-2 border-[#FFE8D1] px-8 py-3 font-bold uppercase tracking-wider shadow-[6px_6px_0_0_#FFE8D1] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#FFE8D1] text-base"
               >
                 Session Retake
               </button>
               <button
                 onClick={handleDownload}
                 disabled={isSaving}
-                className="bg-[#FFE8D1] hover:bg-[#f5ddc5] text-[#3D2314] border-2 border-[#3D2314] px-6 py-2.5 font-bold uppercase tracking-wider shadow-[4px_4px_0_0_#3D2314] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#3D2314] text-sm disabled:opacity-50"
+                className="bg-[#FFE8D1] hover:bg-[#f5ddc5] text-[#3D2314] border-2 border-[#3D2314] px-8 py-3 font-bold uppercase tracking-wider shadow-[6px_6px_0_0_#3D2314] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#3D2314] text-base disabled:opacity-50"
               >
                 {isSaving ? 'Processing...' : 'Save to Device'}
               </button>
