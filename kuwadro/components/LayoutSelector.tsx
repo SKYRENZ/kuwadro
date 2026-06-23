@@ -27,19 +27,19 @@ interface LayoutSelectorProps {
 const LayoutSelector = ({ onSelect }: LayoutSelectorProps) => {
   return (
     <div className="w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="text-center mb-10">
+      <div className="text-center mb-6">
         <h2 className="text-2xl font-serif italic text-[#6B4E31] mb-2">Choose your frame</h2>
         <div className="h-1 w-24 bg-[#D97732] mx-auto rounded-full"></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {LAYOUTS.map((layout) => (
           <button
             key={layout.id}
             disabled={layout.locked}
             onClick={() => !layout.locked && onSelect(layout)}
             className={`
-              relative group flex flex-col items-center p-6 border-4 rounded-sm transition-all duration-300
+              relative group flex flex-col items-center p-4 border-4 rounded-sm transition-all duration-300
               ${layout.locked 
                 ? 'bg-[#1a1a1a] border-black/40 opacity-90 cursor-not-allowed scale-[0.98]' 
                 : 'bg-[#E2D2B8] border-[#3D2314] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-[4px_4px_0px_0px_#3D2314] shadow-[8px_8px_0px_0px_#3D2314] active:translate-x-[6px] active:translate-y-[6px] active:shadow-[2px_2px_0px_0px_#3D2314]'}
@@ -47,7 +47,7 @@ const LayoutSelector = ({ onSelect }: LayoutSelectorProps) => {
           >
             {/* Visual Preview of Layout */}
             <div className={`
-              w-full aspect-[4/3] border-2 mb-4 grid gap-2 p-2 transition-colors duration-300
+              w-full aspect-[4/3] border-2 mb-2 grid gap-2 p-2 transition-colors duration-300
               ${layout.locked ? 'bg-black/20 border-white/5' : 'bg-[#3D2314]/5 border-[#3D2314]/20'}
               ${layout.id === 'solo' ? 'grid-cols-1' : ''}
               ${layout.id === '2-picture' ? 'grid-cols-2' : ''}
@@ -68,7 +68,7 @@ const LayoutSelector = ({ onSelect }: LayoutSelectorProps) => {
             </div>
 
             <div className="flex flex-col items-center">
-              <span className={`text-xl font-black uppercase tracking-wider ${layout.locked ? 'text-white/20' : 'text-[#3D2314]'}`}>
+              <span className={`text-lg font-black uppercase tracking-wider ${layout.locked ? 'text-white/20' : 'text-[#3D2314]'}`}>
                 {layout.name}
               </span>
               {layout.locked && (

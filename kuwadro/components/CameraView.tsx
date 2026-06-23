@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { startCameraStream, captureFrame, stopCameraStream } from '@/lib/camera';
+import { generatePrintImage, downloadImage } from '@/lib/print';
 
 interface CameraViewProps {
   layout: {
@@ -13,7 +14,7 @@ interface CameraViewProps {
 
 const CameraView = ({ layout }: CameraViewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+
   // Guard for missing layout
   if (!layout) {
     return <div className="p-8 text-[#FFE8D1]">Initializing layout...</div>;
@@ -23,6 +24,7 @@ const CameraView = ({ layout }: CameraViewProps) => {
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [isFlashing, setIsFlashing] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const isComplete = capturedImages.length === layout.count;
 
@@ -88,6 +90,21 @@ const CameraView = ({ layout }: CameraViewProps) => {
     setCapturedImages([]);
   };
 
+  const handleDownload = async () => {
+    if (capturedImages.length === 0) return;
+
+    setIsSaving(true);
+    try {
+      const compositeUrl = await generatePrintImage(capturedImages, layout.id, layout.name);
+      downloadImage(compositeUrl, `kuwadro-${layout.id}-${Date.now()}.png`);
+    } catch (err) {
+      console.error('Failed to generate print:', err);
+      alert('Something went wrong while saving your photo.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const renderLayoutOverlay = (images: (string | null)[], isPreview: boolean = false) => {
     let gridClass = "grid-cols-1 grid-rows-1";
     if (layout.id === '2-picture') gridClass = "grid-cols-2 grid-rows-1";
@@ -104,13 +121,13 @@ const CameraView = ({ layout }: CameraViewProps) => {
                 <span className="text-[#FFE8D1] font-bold text-sm tracking-widest uppercase">Next Shot</span>
               </div>
             ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="opacity-20 text-[#FFE8D1]">
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-                  <circle cx="9" cy="9" r="2"/>
-                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="opacity-20 text-[#FFE8D1]">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
             )}
-            
+
             {/* Slot Number */}
             <div className="absolute top-2 left-2 w-6 h-6 bg-[#3D2314] text-[#FFE8D1] text-[10px] font-black flex items-center justify-center rounded-full border border-[#FFE8D1]/30">
               {i + 1}
@@ -122,103 +139,117 @@ const CameraView = ({ layout }: CameraViewProps) => {
   };
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto rounded-sm overflow-hidden bg-[#3D2314] border-4 border-[#3D2314] shadow-[12px_12px_0px_0px_#3D2314] flex flex-col items-center justify-center min-h-[520px]">
-      
-      {/* Camera denied message */}
-      {hasPermission === false && (
-        <div className="p-8 text-center text-[#FFE8D1] font-bold text-xl">
-          <p>Please grant camera access to use the photo booth.</p>
+    <div className="z-10 w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 items-center lg:items-start justify-center">
+
+      {/* ───── SIDE PREVIEW FRAME (Elegant Sidebar) ───── */}
+      {!isComplete && (
+        <div className="w-40 xl:w-48 shrink-0 animate-in slide-in-from-left duration-700 lg:mt-4">
+          <div className="bg-[#E2D2B8] p-2 border-2 border-[#3D2314] shadow-[4px_4px_0px_0px_#3D2314] rounded-sm transform lg:-rotate-1">
+            <div className="text-[9px] font-black text-[#3D2314] uppercase tracking-[0.2em] mb-1.5 opacity-60 text-center">Your Frame</div>
+            <div className="scale-95 origin-top">
+              {renderLayoutOverlay(capturedImages, true)}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ───── LIVE CAMERA VIEW ───── */}
-      {!isComplete ? (
-        <div className="relative w-full aspect-video md:aspect-[4/3] flex items-center justify-center overflow-hidden">
-          {/* Flash overlay */}
-          {isFlashing && (
-            <div className="absolute inset-0 z-50 bg-white animate-pulse pointer-events-none" />
-          )}
+      <div className={`relative w-full max-w-2xl rounded-sm overflow-hidden bg-[#3D2314] border-[6px] border-[#3D2314] shadow-[16px_16px_0px_0px_#3D2314] flex flex-col items-center justify-center ${isComplete ? 'min-h-auto' : 'min-h-[360px] md:min-h-[440px]'}`}>
 
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className={`w-full h-full object-cover transform -scale-x-100 ${hasPermission === false ? 'hidden' : 'block'}`}
-          />
-
-          {/* Layout Overlay (Smaller version in corner) */}
-          <div className="absolute top-4 left-4 w-48 shadow-2xl border-2 border-[#FFE8D1]/30 z-20 pointer-events-none opacity-90 scale-90 origin-top-left">
-            {renderLayoutOverlay(capturedImages, true)}
+        {/* Camera denied message */}
+        {hasPermission === false && (
+          <div className="p-8 text-center text-[#FFE8D1] font-bold text-xl">
+            <p>Please grant camera access to use the photo booth.</p>
           </div>
+        )}
 
-          {/* Countdown overlay */}
-          {countdown !== null && (
-            <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/40 backdrop-blur-sm">
-              <span
-                className="text-[12rem] font-black text-[#FFE8D1] drop-shadow-[0_8px_8px_rgba(0,0,0,0.9)] animate-pulse"
-                style={{ fontFamily: 'ui-serif, Georgia, serif' }}
-              >
-                {countdown}
-              </span>
+        {/* ───── LIVE CAMERA VIEW ───── */}
+        {!isComplete ? (
+          <div className="relative w-full aspect-video md:aspect-[4/3] flex items-center justify-center overflow-hidden">
+            {/* Flash overlay */}
+            {isFlashing && (
+              <div className="absolute inset-0 z-50 bg-white animate-pulse pointer-events-none" />
+            )}
+
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className={`w-full h-full object-cover transform -scale-x-100 ${hasPermission === false ? 'hidden' : 'block'}`}
+            />
+
+            {/* Countdown overlay */}
+            {countdown !== null && (
+              <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/40 backdrop-blur-sm">
+                <span
+                  className="text-[12rem] font-black text-[#FFE8D1] drop-shadow-[0_8px_8px_rgba(0,0,0,0.9)] animate-pulse"
+                  style={{ fontFamily: 'ui-serif, Georgia, serif' }}
+                >
+                  {countdown}
+                </span>
+              </div>
+            )}
+
+            {/* Viewfinder elements */}
+            <div className="absolute inset-0 pointer-events-none border-[12px] border-[#3D2314]/10 z-10" />
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-60 z-10">
+              <div className={`w-16 h-16 border-2 rounded-full transition-all duration-300 ${countdown !== null ? 'border-[#D97732] scale-125' : 'border-[#FFE8D1]/80'}`} />
             </div>
-          )}
 
-          {/* Viewfinder elements */}
-          <div className="absolute inset-0 pointer-events-none border-[12px] border-[#3D2314]/10 z-10" />
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-60 z-10">
-            <div className={`w-16 h-16 border-2 rounded-full transition-all duration-300 ${countdown !== null ? 'border-[#D97732] scale-125' : 'border-[#FFE8D1]/80'}`} />
-          </div>
-
-          {/* REC badge with shot count */}
-          <div className="absolute top-4 right-4 bg-[#D97732] text-[#FFE8D1] px-3 py-1 rounded-sm text-xs font-black tracking-widest border-2 border-[#3D2314] uppercase shadow-[2px_2px_0px_0px_#3D2314] flex items-center gap-2 z-10">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse shadow-[0_0_8px_2px_rgba(220,38,38,0.8)]" />
-            SHOT {capturedImages.length + 1} / {layout.count}
-          </div>
-
-          {/* ──── CAPTURE BUTTON ──── */}
-          <button
-            onClick={handleCapture}
-            disabled={countdown !== null || hasPermission === false}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 group disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Take Photo"
-          >
-            <div className="w-[80px] h-[80px] rounded-full bg-[#3D2314] border-4 border-[#FFE8D1] shadow-[4px_4px_0px_0px_#D97732] flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95">
-              <div className="w-[32px] h-[32px] bg-[#D97732] rounded-full border-2 border-[#FFE8D1]" />
+            {/* REC badge with shot count */}
+            <div className="absolute top-3 right-3 bg-[#D97732] text-[#FFE8D1] px-2 py-0.5 rounded-sm text-[10px] font-black tracking-widest border-2 border-[#3D2314] uppercase shadow-[1px_1px_0px_0px_#3D2314] flex items-center gap-1.5 z-10">
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse shadow-[0_0_6px_1px_rgba(220,38,38,0.8)]" />
+              SHOT {capturedImages.length + 1} / {layout.count}
             </div>
-          </button>
-        </div>
-      ) : (
-        /* ───── FINAL LAYOUT PREVIEW ───── */
-        <div className="w-full flex flex-col items-center">
-          <div className="w-full max-w-2xl mx-auto p-4">
-             <div className="bg-[#FFE8D1] p-4 shadow-2xl border-x-[12px] border-t-[12px] border-b-[48px] border-[#FFE8D1] relative">
+
+            {/* ──── CAPTURE BUTTON ──── */}
+            <button
+              onClick={handleCapture}
+              disabled={countdown !== null || hasPermission === false}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 group disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Take Photo"
+            >
+              <div className="w-[64px] h-[64px] rounded-full bg-[#3D2314] border-4 border-[#FFE8D1] shadow-[3px_3px_0px_0px_#D97732] flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95">
+                <div className="w-[24px] h-[24px] bg-[#D97732] rounded-full border-2 border-[#FFE8D1]" />
+              </div>
+            </button>
+          </div>
+        ) : (
+          /* ───── FINAL LAYOUT PREVIEW ───── */
+          <div className="w-full flex flex-col items-center">
+            <div className="w-full max-w-lg mx-auto p-2">
+              <div className="bg-[#FFE8D1] p-2.5 shadow-2xl border-x-[8px] border-t-[8px] border-b-[36px] border-[#FFE8D1] relative">
                 {renderLayoutOverlay(capturedImages)}
                 {/* Branding on the bottom of the "print" */}
                 <div className="absolute bottom-[-36px] left-0 w-full flex justify-between px-4 items-center">
-                   <span className="text-[#3D2314] font-black text-xl tracking-tighter italic uppercase">Kuwadro</span>
-                   <span className="text-[#3D2314]/40 font-mono text-[10px]">{new Date().toLocaleDateString()}</span>
+                  <div className="flex flex-col">
+                    <span className="text-[#3D2314] font-black text-xl tracking-tighter italic uppercase leading-none">Kuwadro</span>
+                    <span className="text-[#3D2314]/60 font-mono text-[8px] mt-1">kuwadro.vercel.app</span>
+                  </div>
+                  <span className="text-[#3D2314]/40 font-mono text-[10px]">{new Date().toLocaleDateString()}</span>
                 </div>
-             </div>
-          </div>
+              </div>
+            </div>
 
-          {/* Action buttons */}
-          <div className="w-full p-8 bg-[#3D2314] flex justify-center gap-6 z-20 mt-4">
-            <button
-              onClick={handleRetake}
-              className="bg-[#D97732] hover:bg-[#c96622] text-[#FFE8D1] border-2 border-[#FFE8D1] px-8 py-3 font-bold uppercase tracking-wider shadow-[4px_4px_0_0_#FFE8D1] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#FFE8D1]"
-            >
-              Session Retake
-            </button>
-            <button
-              onClick={() => alert('Export functionality coming next!')}
-              className="bg-[#FFE8D1] hover:bg-[#f5ddc5] text-[#3D2314] border-2 border-[#3D2314] px-8 py-3 font-bold uppercase tracking-wider shadow-[4px_4px_0_0_#3D2314] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#3D2314]"
-            >
-              Print Frame
-            </button>
+            {/* Action buttons */}
+            <div className="w-full p-6 bg-[#3D2314] flex justify-center gap-4 z-20 mt-2">
+              <button
+                onClick={handleRetake}
+                className="bg-[#D97732] hover:bg-[#c96622] text-[#FFE8D1] border-2 border-[#FFE8D1] px-6 py-2.5 font-bold uppercase tracking-wider shadow-[4px_4px_0_0_#FFE8D1] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#FFE8D1] text-sm"
+              >
+                Session Retake
+              </button>
+              <button
+                onClick={handleDownload}
+                disabled={isSaving}
+                className="bg-[#FFE8D1] hover:bg-[#f5ddc5] text-[#3D2314] border-2 border-[#3D2314] px-6 py-2.5 font-bold uppercase tracking-wider shadow-[4px_4px_0_0_#3D2314] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#3D2314] text-sm disabled:opacity-50"
+              >
+                {isSaving ? 'Processing...' : 'Save to Device'}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
