@@ -25,6 +25,7 @@ const CameraView = ({ layout }: CameraViewProps) => {
   const [isFlashing, setIsFlashing] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const isComplete = capturedImages.length === layout.count;
 
@@ -105,6 +106,47 @@ const CameraView = ({ layout }: CameraViewProps) => {
     }
   };
 
+  const handleShare = async () => {
+    if (capturedImages.length === 0) return;
+    setIsSharing(true);
+
+    try {
+      // 1. Generate the composite image
+      const compositeUrl = await generatePrintImage(capturedImages, layout.id, layout.name);
+
+      // 2. Upload it securely to Cloudinary via Next API route
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: compositeUrl }),
+      });
+
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json();
+        throw new Error(errData.error || 'Failed to upload photo for sharing.');
+      }
+
+      const uploadData = await uploadRes.json();
+      const cloudinaryUrl = uploadData.url;
+
+      // 3. Formulate the dynamic target page URL to be shared
+      let baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://kuwadro.vercel.app';
+      if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+        baseUrl = 'https://kuwadro.vercel.app';
+      }
+
+      const shareLandingUrl = `${baseUrl}/share?img=${encodeURIComponent(cloudinaryUrl)}`;
+      const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLandingUrl)}`;
+      
+      window.open(fbShareUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+    } catch (err: any) {
+      console.error('Sharing failed:', err);
+      alert(err.message || 'Something went wrong while uploading your photo.');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   const renderLayoutOverlay = (images: (string | null)[], isPreview: boolean = false) => {
     let gridClass = "grid-cols-1 grid-rows-1";
     if (layout.id === '2-picture') gridClass = "grid-cols-2 grid-rows-1";
@@ -115,7 +157,7 @@ const CameraView = ({ layout }: CameraViewProps) => {
         {Array.from({ length: layout.count }).map((_, i) => (
           <div key={i} className={`relative aspect-[4/3] bg-[#EFE6D5]/10 border-2 border-[#EFE6D5]/20 overflow-hidden flex items-center justify-center ${layout.id === 'solo' ? 'h-full' : ''}`}>
             {images[i] ? (
-              <img src={images[i]!} alt={`Shot ${i + 1}`} className="w-full h-full object-cover transform -scale-x-100" />
+              <img src={images[i]!} alt={`Shot ${i + 1}`} className="w-full h-full object-cover" />
             ) : (isPreview && i === capturedImages.length) ? (
               <div className="absolute inset-0 bg-[#D97732]/20 animate-pulse flex items-center justify-center">
                 <span className="text-[#FFE8D1] font-bold text-sm tracking-widest uppercase">Next Shot</span>
@@ -232,19 +274,29 @@ const CameraView = ({ layout }: CameraViewProps) => {
             </div>
 
             {/* Action buttons */}
-            <div className="w-full p-8 bg-[#3D2314] flex justify-center gap-6 z-20 mt-4">
+            <div className="w-full p-6 bg-[#3D2314] flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 z-20 mt-4">
               <button
                 onClick={handleRetake}
-                className="bg-[#D97732] hover:bg-[#c96622] text-[#FFE8D1] border-2 border-[#FFE8D1] px-8 py-3 font-bold uppercase tracking-wider shadow-[6px_6px_0_0_#FFE8D1] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#FFE8D1] text-base"
+                className="w-full sm:w-auto bg-[#D97732] hover:bg-[#c96622] text-[#FFE8D1] border-2 border-[#FFE8D1] px-8 py-3 font-bold uppercase tracking-wider shadow-[6px_6px_0_0_#FFE8D1] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#FFE8D1] text-base text-center"
               >
                 Session Retake
               </button>
               <button
                 onClick={handleDownload}
                 disabled={isSaving}
-                className="bg-[#FFE8D1] hover:bg-[#f5ddc5] text-[#3D2314] border-2 border-[#3D2314] px-8 py-3 font-bold uppercase tracking-wider shadow-[6px_6px_0_0_#3D2314] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#3D2314] text-base disabled:opacity-50"
+                className="w-full sm:w-auto bg-[#FFE8D1] hover:bg-[#f5ddc5] text-[#3D2314] border-2 border-[#3D2314] px-8 py-3 font-bold uppercase tracking-wider shadow-[6px_6px_0_0_#3D2314] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#3D2314] text-base disabled:opacity-50 text-center"
               >
                 {isSaving ? 'Processing...' : 'Save to Device'}
+              </button>
+              <button
+                onClick={handleShare}
+                disabled={isSharing}
+                className="w-full sm:w-auto bg-[#1877F2] hover:bg-[#166fe5] text-[#FFE8D1] border-2 border-[#FFE8D1] px-8 py-3 font-bold uppercase tracking-wider shadow-[6px_6px_0_0_#FFE8D1] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#FFE8D1] text-base flex items-center justify-center gap-2 text-center disabled:opacity-55"
+              >
+                <svg className="w-5 h-5 fill-current animate-pulse" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                {isSharing ? 'Sharing...' : 'Share'}
               </button>
             </div>
           </div>
